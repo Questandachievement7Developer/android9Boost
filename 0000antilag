@@ -1,0 +1,38 @@
+#!/bin/sh
+set +x
+pkglist=$(pm list packages -f | sed -e 's/.*=//' | sort)
+#echo ${pkglist}
+
+
+if [ $1 == 'restore' ]; then
+for a in ${pkglist}; do
+echo "Deoptimizing ${a}"
+cmd appops set "${a}" WAKE_LOCK allow
+cmd appops set "${a}" RUN_IN_BACKGROUND allow
+cmd appops set "${a}" RUN_ANY_IN_BACKGROUND allow
+cmd appops set "${a}" START_FOREGROUND allow
+done 
+exit
+fi
+
+
+
+for a in ${pkglist}; do
+echo "Optimizing ${a}"
+cmd appops set "${a}" RUN_IN_BACKGROUND ignore
+cmd appops set "${a}" RUN_ANY_IN_BACKGROUND ignore
+cmd appops set "${a}" START_FOREGROUND allow
+cmd appops set "${a}" BOOT_COMPLETED ignore
+done
+
+pkglistsystem=$(pm list packages -f | sed -e 's/.*=//' | sort | grep android)
+echo ${pkglistsystem}
+
+for a in ${pkglistsystem}; do
+echo Prioritizing System Process ${a}
+cmd appops set "${a}" RUN_IN_BACKGROUND allow
+cmd appops set "${a}" RUN_ANY_IN_BACKGROUND allow
+cmd appops set "${a}" BOOT_COMPLETED allow
+done
+
+reboot
